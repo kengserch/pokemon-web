@@ -1,4 +1,14 @@
-async function fetchPokemon(page = 1) {
+let currentPage = 1
+
+document.getElementById('prev-btn').addEventListener('click', () => changePage(-1));
+document.getElementById('next-btn').addEventListener('click', () => changePage(1));
+
+function changePage(direction) {
+    currentPage += direction
+    fetchPokemon(currentPage)
+}
+
+async function fetchPokemon(page) {
     const limit = 12
     const offset = (page - 1) * limit
     try {
@@ -11,6 +21,10 @@ async function fetchPokemon(page = 1) {
         const pokemonData = await Promise.all(promises)
         //console.log(typeof pokemonData)
         renderPokemon(pokemonData)
+        
+        document.getElementById('prev-btn').disabled = page === 1
+        document.getElementById('next-btn').disabled = pokemonData.length < limit
+        
     } catch (error) {
         console.log(error)
     }
@@ -20,11 +34,11 @@ const searchInput = document.querySelector('.js-search-input')
 const searchBtn = document.querySelector('.js-search-btn')
 
 async function handleSearch() {
-    const pokemon = searchInput.value.trim();
+    const pokemon = searchInput.value.trim()
     if (pokemon) {
         await searchPokemon(pokemon)
-    }else {
-        await fetchPokemon(); 
+    } else {
+        await fetchPokemon()
     }
 }
 
@@ -42,9 +56,9 @@ searchInput.addEventListener('keypress', (event) => {
 
 searchInput.addEventListener('input', async () => {
     if (searchInput.value.trim() === '') {
-        await fetchPokemon(); // โหลด Pokémon ทั้งหมดอีกครั้งเมื่อ input ว่าง
+        await fetchPokemon() // โหลด Pokémon ทั้งหมดอีกครั้งเมื่อ input ว่าง
     }
-});
+})
 
 async function searchPokemon(query) {
     try {
@@ -63,6 +77,8 @@ function renderPokemon(pokemonData) {
     if (!Array.isArray(pokemonData)) {
         pokemonData = [pokemonData] // แปลง object เดี่ยวให้เป็นอาร์เรย์
         //console.log(typeof pokemonData)
+        document.getElementById('prev-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
     }
 
     pokemonData.forEach((pokemon) => {
@@ -87,8 +103,7 @@ function renderPokemon(pokemonData) {
     })
 
     document.querySelector('.js-pokemon-grid').innerHTML = pokemonDisplay
+    
 }
 
-//searchPokemon('ditto')
-
-fetchPokemon(1)
+fetchPokemon(currentPage)
