@@ -1,6 +1,5 @@
 let currentPage = 1
-let allPokemonData = []
-let filterPokemon = []
+let pokemonData = []
 
 document.getElementById('prev-btn').addEventListener('click', () => changePage(-1))
 document.getElementById('next-btn').addEventListener('click', () => changePage(1))
@@ -17,16 +16,16 @@ async function fetchPokemon(page) {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
         if (!response.ok) throw new Error('Failed to fetch Pokémon list')
         const data = await response.json()
-        console.log(data)
+        //console.log(data)
         // const promises = data.results.map((pokemon) => fetch(pokemon.url).then((res) => res.json()))
         const promises = data.results.map(async (pokemon) => {
             const res = await fetch(pokemon.url)
             return res.json()
         })
-        console.log(promises)
-        const pokemonData = await Promise.all(promises)
+        //console.log(promises)
+        pokemonData = await Promise.all(promises);
         //console.log(typeof pokemonData)
-        renderPokemon(pokemonData)
+        renderPokemon()
 
         document.getElementById('prev-btn').disabled = page === 1
         document.getElementById('next-btn').disabled = pokemonData.length < limit
@@ -76,7 +75,7 @@ async function searchPokemon(query) {
     }
 }
 
-function renderPokemon(pokemonData) {
+function renderPokemon() {
     let pokemonDisplay = ''
 
     if (!Array.isArray(pokemonData)) {
@@ -86,33 +85,86 @@ function renderPokemon(pokemonData) {
         document.getElementById('next-btn').disabled = true
     }
 
-    pokemonData.forEach((pokemon) => {
+    console.log(pokemonData)
+
+    pokemonData.forEach((pokemon,index) => {
         const firstType = pokemon.types[0]?.type.name || '-'
         const secondType = pokemon.types[1]?.type.name || null
         const firstBadgeClass = getTypeBadgeClass(firstType)
         const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : ''
-        pokemonDisplay += `
-            <div class="card bg-base-100 w-80 drop-shadow-xl">
+        //transition-all duration-150 ease-out hover:bg-gradient-to-r from-cyan-500 to-blue-500
+        pokemonDisplay += `<div class="card bg-slate-700 w-full drop-shadow-lg transition ease-in-out delay-75 hover:drop-shadow-xl hover:-translate-y-6 cursor-pointer duration-300 js-card" data-pokemon-id="${index}"> 
                         <div class="flex items-center justify-center w-full h-[10rem]">
                             <img width="100px" height="auto" src="${pokemon.sprites.other.dream_world.front_default}"/>
                         </div>
                         <div class="card-body">
-                            <h2 class="card-title">
-                                ${pokemon.name}
+                            <h2 class="card-title text-2xl">
+                                ${pokemon.name.charAt(0).toUpperCase()
+                                    + pokemon.name.slice(1)}
                             </h2>
                             <div class="card-actions justify-end ">
-                                <div class="badge text-white ${firstBadgeClass}">${firstType}</div>
+                                <div class="badge h-auto text-white text-lg border-none ${firstBadgeClass}">${firstType}</div>
                                 ${secondType ? 
-                                    `<div class="badge text-white ${secondBadgeClass}">${secondType}</div>` 
+                                    `<div class="badge h-auto text-white text-lg border-none ${secondBadgeClass}">${secondType}</div>` 
                                 : ''}
                             </div>
                         </div>
-            </div>
-            `
+            </div>`
     })
 
-    document.querySelector('.js-pokemon-grid').innerHTML = pokemonDisplay
+    const grid = document.querySelector('.js-pokemon-grid')
+    grid.innerHTML = pokemonDisplay
+
+    grid.addEventListener('click', (event) => {
+        const card = event.target.closest('.js-card');
+        //console.log(card.dataset.pokemonId)
+        if (card) {
+            const index = card.dataset.pokemonId 
+            openModal(index)
+        }
+    });
+    
 }
+
+function openModal(index) {
+    const pokemon = pokemonData[index]; 
+    console.log(pokemon);
+    
+    
+
+    document.getElementById('pokemon-modal').innerHTML = `<div class="modal-content bg-white rounded-lg p-6 max-w-md w-full h-auto relative">
+                    <button id="modal-close" class="modal-close text-gray-500 top-4 right-4 absolute" onclick="${closeModal()}">✖</button>
+                    <h2 id="modal-title" class="text-xl text-black font-bold mb-4">${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
+                    <div id="modal-body">
+                        <!-- Details will be injected here -->
+                    </div>
+    </div>`
+
+
+    
+
+    const statsHtml = pokemon.stats.map(stat => `
+        <div class="flex justify-between text-black">
+            <span>${stat.stat.name.toUpperCase()}</span>
+            <span>${stat.base_stat}</span>
+        </div>
+    `).join('');
+
+    document.getElementById('modal-body').innerHTML = statsHtml;
+
+    
+    document.getElementById('pokemon-modal').classList.remove('hidden'); 
+
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    
+}
+
+function closeModal() {
+    document.getElementById('pokemon-modal').classList.add('hidden');
+}
+
+
 
 function getTypeBadgeClass(type) {
     const typeColors = {
