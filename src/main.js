@@ -1,12 +1,11 @@
 let currentPage = 1
-let pokemonData 
 let allPokemonData = []
-
+let filteredPokemonData = []
 
 document.getElementById('prev-btn').addEventListener('click', () => changePage(-1))
 document.getElementById('next-btn').addEventListener('click', () => changePage(1))
 
-fetchPokemon(1)
+fetchPokemon()
 
 // async function initializePage() {
 //     await fetchPokemon(1)
@@ -17,22 +16,14 @@ fetchPokemon(1)
 //     initializePage()
 // })
 
-async function changePage(direction) {
-    currentPage += direction
-    await fetchPokemon(currentPage)
-}
-
-async function fetchPokemon(page) {
-    const limit = 12
-    const offset = (page - 1) * limit
-
+async function fetchPokemon() {
     const loader = document.querySelector('.js-loader')
     loader.classList.remove('hidden')
     const grid = document.querySelector('.js-pokemon-grid')
     grid.classList.add('hidden')
 
     try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=1200`)
         if (!response.ok) throw new Error('Failed to fetch Pokémon list')
         const data = await response.json()
         //console.log(data)
@@ -42,11 +33,11 @@ async function fetchPokemon(page) {
             return res.json()
         })
         //console.log(promises)
-        pokemonData = await Promise.all(promises)
+        allPokemonData = await Promise.all(promises)
+        filteredPokemonData = allPokemonData
         //console.log(typeof pokemonData)
-        console.log
-        document.getElementById('prev-btn').disabled = page === 1
-        document.getElementById('next-btn').disabled = pokemonData.length < limit
+        // document.getElementById('prev-btn').disabled = page === 1
+        // document.getElementById('next-btn').disabled = pokemonData.length < limit
         //console.log(page)
     } catch (error) {
         console.log(error)
@@ -54,63 +45,36 @@ async function fetchPokemon(page) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         loader.classList.add('hidden')
         grid.classList.remove('hidden')
-        renderPokemon()
+        renderPokemonPage()
     }
 }
 
-const searchInput = document.querySelector('.js-search-input')
-const searchBtn = document.querySelector('.js-search-btn')
+async function changePage(direction) {
+    currentPage += direction
+    renderPokemonPage()
+}
+function filterByType(type) {
+    filteredPokemonData = allPokemonData.filter((pokemon) => pokemon.types.some((t) => t.type.name === type))
 
-async function handleSearch() {
-    const pokemon = searchInput.value.trim()
-    if (pokemon) {
-        await searchPokemon(pokemon)
-    } else {
-        await fetchPokemon()
-    }
+    currentPage = 1 // รีเซ็ตกลับไปหน้าแรกหลังจาก filter
+    renderPokemonPage()
 }
 
-searchBtn.addEventListener('click', (event) => {
-    event.preventDefault()
-    handleSearch()
-})
+function renderPokemonPage() {
+    const limit = 20
+    const startIndex = (currentPage - 1) * limit
+    const endIndex = startIndex + limit
 
-searchInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        event.preventDefault()
-        handleSearch()
-    }
-})
+    const pokemonToDisplay = filteredPokemonData.slice(startIndex, endIndex)
 
-searchInput.addEventListener('input', async () => {
-    if (searchInput.value.trim() === '') {
-        await fetchPokemon() // โหลด Pokémon ทั้งหมดอีกครั้งเมื่อ input ว่าง
-    }
-})
+    renderPokemon(pokemonToDisplay)
 
-async function searchPokemon(query) {
-
-    const loader = document.querySelector('.js-loader')
-    loader.classList.remove('hidden')
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.classList.add('hidden')
-
-    try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`)
-        if (!response.ok) throw new Error('Failed to fetch Pokémon list')
-        const data = await response.json()
-        pokemonData = data
-    } catch (error) {
-        alert('Pokemon not found!')
-    }finally {
-        await new Promise((resolve) => setTimeout(resolve, 300))
-        loader.classList.add('hidden')
-        grid.classList.remove('hidden')
-        renderPokemon()
-    }
+    // อัปเดตปุ่ม Next/Previous
+    document.getElementById('prev-btn').disabled = currentPage === 1
+    document.getElementById('next-btn').disabled = endIndex >= filteredPokemonData.length
 }
 
-function renderPokemon() {
+function renderPokemon(pokemonData) {
     let pokemonDisplay = ''
 
     if (!Array.isArray(pokemonData)) {
@@ -159,8 +123,76 @@ function renderPokemon() {
     })
 }
 
+const searchInput = document.querySelector('.js-search-input')
+const searchBtn = document.querySelector('.js-search-btn')
+
+async function handleSearch() {
+    const pokemon = searchInput.value.trim()
+    if (pokemon) {
+        await searchPokemon(pokemon)
+    } else {
+        await fetchPokemon()
+    }
+}
+
+searchBtn.addEventListener('click', (event) => {
+    event.preventDefault()
+    handleSearch()
+})
+
+searchInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault()
+        handleSearch()
+    }
+})
+
+searchInput.addEventListener('input', async () => {
+    if (searchInput.value.trim() === '') {
+        await fetchPokemon() // โหลด Pokémon ทั้งหมดอีกครั้งเมื่อ input ว่าง
+    }
+})
+
+async function searchPokemon(query) {
+    const loader = document.querySelector('.js-loader')
+    loader.classList.remove('hidden')
+    const grid = document.querySelector('.js-pokemon-grid')
+    grid.classList.add('hidden')
+
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`)
+        if (!response.ok) throw new Error('Failed to fetch Pokémon list')
+        const data = await response.json()
+        pokemonData = data
+    } catch (error) {
+        alert('Pokemon not found!')
+    } finally {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        loader.classList.add('hidden')
+        grid.classList.remove('hidden')
+        renderPokemon()
+    }
+}
+
+const types = ['normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy']
+const container = document.querySelector('.types-container');
+
+types.forEach(type => {
+    const button = document.createElement('button');
+    button.classList.add('btn');
+    button.classList.add(type + '-btn'); // เพิ่มคลาสที่เป็นเอกลักษณ์ตามประเภท
+    //button.classList.add(`${getTypeBadgeClass(type)}`)
+    button.textContent = type.charAt(0).toUpperCase() + type.slice(1); // แสดงชื่อประเภท
+    container.appendChild(button); // เพิ่มปุ่มใน container
+
+    // เพิ่ม event listener ให้ปุ่มแต่ละตัว
+    button.addEventListener('click', () => {
+        filterByType(type); // เมื่อคลิกจะเรียกฟังก์ชัน filterByType พร้อมกับประเภทที่เลือก
+    });
+});
+
 function openModal(index) {
-    const pokemon = pokemonData[index]
+    const pokemon = allPokemonData[index]
     //console.log(pokemon)
     const firstType = pokemon.types[0]?.type.name || '-'
     const secondType = pokemon.types[1]?.type.name || null
