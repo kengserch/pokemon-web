@@ -1,17 +1,36 @@
 let currentPage = 1
-let pokemonData = []
+let pokemonData 
+let allPokemonData = []
+
 
 document.getElementById('prev-btn').addEventListener('click', () => changePage(-1))
 document.getElementById('next-btn').addEventListener('click', () => changePage(1))
 
-function changePage(direction) {
+fetchPokemon(1)
+
+// async function initializePage() {
+//     await fetchPokemon(1)
+//     renderPokemon()
+// }
+
+// document.addEventListener('DOMContentLoaded', () => {
+//     initializePage()
+// })
+
+async function changePage(direction) {
     currentPage += direction
-    fetchPokemon(currentPage)
+    await fetchPokemon(currentPage)
 }
 
 async function fetchPokemon(page) {
     const limit = 12
     const offset = (page - 1) * limit
+
+    const loader = document.querySelector('.js-loader')
+    loader.classList.remove('hidden')
+    const grid = document.querySelector('.js-pokemon-grid')
+    grid.classList.add('hidden')
+
     try {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
         if (!response.ok) throw new Error('Failed to fetch Pokémon list')
@@ -23,14 +42,19 @@ async function fetchPokemon(page) {
             return res.json()
         })
         //console.log(promises)
-        pokemonData = await Promise.all(promises);
+        pokemonData = await Promise.all(promises)
         //console.log(typeof pokemonData)
-        renderPokemon()
-
+        console.log
         document.getElementById('prev-btn').disabled = page === 1
         document.getElementById('next-btn').disabled = pokemonData.length < limit
+        //console.log(page)
     } catch (error) {
         console.log(error)
+    } finally {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        loader.classList.add('hidden')
+        grid.classList.remove('hidden')
+        renderPokemon()
     }
 }
 
@@ -65,13 +89,24 @@ searchInput.addEventListener('input', async () => {
 })
 
 async function searchPokemon(query) {
+
+    const loader = document.querySelector('.js-loader')
+    loader.classList.remove('hidden')
+    const grid = document.querySelector('.js-pokemon-grid')
+    grid.classList.add('hidden')
+
     try {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`)
         if (!response.ok) throw new Error('Failed to fetch Pokémon list')
         const data = await response.json()
-        renderPokemon(data)
+        pokemonData = data
     } catch (error) {
-        console.log(error)
+        alert('Pokemon not found!')
+    }finally {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        loader.classList.add('hidden')
+        grid.classList.remove('hidden')
+        renderPokemon()
     }
 }
 
@@ -85,13 +120,15 @@ function renderPokemon() {
         document.getElementById('next-btn').disabled = true
     }
 
-    console.log(pokemonData)
+    //console.log(pokemonData)
 
-    pokemonData.forEach((pokemon,index) => {
+    pokemonData.forEach((pokemon, index) => {
+        //console.log(pokemon)
         const firstType = pokemon.types[0]?.type.name || '-'
         const secondType = pokemon.types[1]?.type.name || null
         const firstBadgeClass = getTypeBadgeClass(firstType)
         const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : ''
+
         //transition-all duration-150 ease-out hover:bg-gradient-to-r from-cyan-500 to-blue-500
         pokemonDisplay += `<div class="card bg-slate-700 w-full drop-shadow-lg transition ease-in-out delay-75 hover:drop-shadow-xl hover:-translate-y-6 cursor-pointer duration-300 js-card" data-pokemon-id="${index}"> 
                         <div class="flex items-center justify-center w-full h-[10rem]">
@@ -99,14 +136,11 @@ function renderPokemon() {
                         </div>
                         <div class="card-body">
                             <h2 class="card-title text-2xl">
-                                ${pokemon.name.charAt(0).toUpperCase()
-                                    + pokemon.name.slice(1)}
+                                ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
                             </h2>
                             <div class="card-actions justify-end ">
                                 <div class="badge h-auto text-white text-lg border-none ${firstBadgeClass}">${firstType}</div>
-                                ${secondType ? 
-                                    `<div class="badge h-auto text-white text-lg border-none ${secondBadgeClass}">${secondType}</div>` 
-                                : ''}
+                                ${secondType ? `<div class="badge h-auto text-white text-lg border-none ${secondBadgeClass}">${secondType}</div>` : ''}
                             </div>
                         </div>
             </div>`
@@ -116,55 +150,66 @@ function renderPokemon() {
     grid.innerHTML = pokemonDisplay
 
     grid.addEventListener('click', (event) => {
-        const card = event.target.closest('.js-card');
+        const card = event.target.closest('.js-card')
         //console.log(card.dataset.pokemonId)
         if (card) {
-            const index = card.dataset.pokemonId 
+            const index = card.dataset.pokemonId
             openModal(index)
         }
-    });
-    
+    })
 }
 
 function openModal(index) {
-    const pokemon = pokemonData[index]; 
-    console.log(pokemon);
-    
-    
+    const pokemon = pokemonData[index]
+    //console.log(pokemon)
+    const firstType = pokemon.types[0]?.type.name || '-'
+    const secondType = pokemon.types[1]?.type.name || null
+    const firstBadgeClass = getTypeBadgeClass(firstType)
+    const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : ''
 
-    document.getElementById('pokemon-modal').innerHTML = `<div class="modal-content bg-white rounded-lg p-6 max-w-md w-full h-auto relative">
-                    <button id="modal-close" class="modal-close text-gray-500 top-4 right-4 absolute" onclick="${closeModal()}">✖</button>
-                    <h2 id="modal-title" class="text-xl text-black font-bold mb-4">${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
-                    <div id="modal-body">
-                        <!-- Details will be injected here -->
-                    </div>
-    </div>`
+    document.getElementById('pokemon-modal').innerHTML = `<div class="modal-content bg-white rounded-lg mx-5 p-6 max-w-md lg:max-w-lg w-full h-auto relative">
+                        <button id="modal-close" class=" text-black top-4 right-4 absolute text-xl font-bold">❌</button>
+                        <div class="flex flex-col items-center justify-center">
+                            <img class="w-[150px] lg:w-[200px]" height="auto" src="${pokemon.sprites.other.dream_world.front_default}"/>
+                            <h2 id="modal-title" class="text-xl text-black font-bold mb-4">${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
+                        </div>
+                        <div class="card-actions justify-center ">
+                                <div class="badge h-auto text-white text-lg border-none ${firstBadgeClass}">${firstType}</div>
+                                ${secondType ? `<div class="badge h-auto text-white text-lg border-none ${secondBadgeClass}">${secondType}</div>` : ''}
+                        </div>
+                        <div id="modal-body">
+                        </div>
+                    </div>`
 
-
-    
-
-    const statsHtml = pokemon.stats.map(stat => `
-        <div class="flex justify-between text-black">
-            <span>${stat.stat.name.toUpperCase()}</span>
-            <span>${stat.base_stat}</span>
+    const statsHtml = pokemon.stats
+        .map(
+            (stat) =>
+                `
+        <div class="flex justify-between flex-col lg:flex-row mt-4 items-center text-black">
+            <span class="font-bold">${stat.stat.name.toUpperCase()} (${stat.base_stat}) </span>
+            <progress id="myProgress" class="progress bg-slate-100 w-56" value="${stat.base_stat}" max="100" style="--progress-value-color: ${getProgressColor(firstType)};"></progress>
         </div>
-    `).join('');
+    `
+        )
+        .join('')
 
-    document.getElementById('modal-body').innerHTML = statsHtml;
+    document.getElementById('modal-body').innerHTML = statsHtml
 
-    
-    document.getElementById('pokemon-modal').classList.remove('hidden'); 
+    document.getElementById('pokemon-modal').classList.remove('hidden')
 
-
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    
+    document.getElementById('modal-close').addEventListener('click', closeModal)
 }
 
 function closeModal() {
-    document.getElementById('pokemon-modal').classList.add('hidden');
+    const modal = document.getElementById('pokemon-modal')
+    const modalContent = document.querySelector('.modal-content')
+    modalContent.classList.add('fadeOut')
+
+    setTimeout(() => {
+        modal.classList.add('hidden')
+        modalContent.classList.remove('fadeOut')
+    }, 200)
 }
-
-
 
 function getTypeBadgeClass(type) {
     const typeColors = {
@@ -190,4 +235,26 @@ function getTypeBadgeClass(type) {
     return typeColors[type] || 'bg-gray-200' // สีเริ่มต้นหากไม่เจอ type
 }
 
-fetchPokemon(currentPage)
+function getProgressColor(type) {
+    const typeColors = {
+        normal: '#9ca3af',
+        fire: '#ef4444',
+        water: '#6390f0',
+        grass: '#22c55e',
+        electric: '#f7d02c',
+        ice: '##22d3ee',
+        fighting: '#c22e28',
+        poison: '#a33ea1',
+        ground: '##ca8a04',
+        flying: '#93c5fd',
+        psychic: '#ec4899',
+        bug: '#15803d',
+        rock: '#4b5563',
+        ghost: '#6366f1',
+        dragon: '#7e22ce',
+        dark: '#1f2937',
+        steel: '#d1d5db',
+        fairy: '#f9a8d4',
+    }
+    return typeColors[type] || '#d3d3d3'
+}

@@ -7,6 +7,11 @@
 .modal-content {
     animation: fadeIn 0.3s ease-out;
 }
+
+.fadeOut {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -16,4 +21,19 @@
         opacity: 1;
         transform: scale(1);
     }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+#myProgress::-webkit-progress-value {
+    background-color: var(--progress-value-color);
 }

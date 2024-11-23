@@ -9,8 +9,6 @@
     </head>
     <body>
         <div class="container mx-auto px-10 py-10 xl:px-0">
-
-            
             <h1 class="text-center text-4xl font-bold">Pokédex</h1>
             <div class="flex justify-center pt-10 drop-shadow">
                 <label class="input input-bordered flex items-center gap-2">
@@ -21,22 +19,20 @@
                 </label>
                 <button class="btn btn-neutral ml-4 js-search-btn">Search</button>
             </div>
-
+            
             <div class="flex items-center justify-center w-full mt-6 gap-3 md:justify-end">
-                <button id="prev-btn"  disabled class="btn btn-neutral">Previous</button>
-                <button id="next-btn"  class="btn btn-neutral">Next</button>
+                <button id="prev-btn" disabled class="btn btn-neutral">Previous</button>
+                <button id="next-btn" class="btn btn-neutral">Next</button>
+            </div>
+            <div class="hidden flex justify-center  js-loader">
+                <span class="loading loading-spinner loading-lg"></span>
             </div>
 
-            <div class="grid  grid-cols-1 gap-10 mt-10 justify-items-center md:grid-cols-3  xl:grid-cols-4   js-pokemon-grid">
-            </div>
+            <div class="grid grid-cols-1 gap-10 mt-10 justify-items-center md:grid-cols-3 xl:grid-cols-4 js-pokemon-grid"></div>
 
-        <div id="pokemon-modal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                
+            <div id="pokemon-modal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"></div>
         </div>
 
-        </div>
-
-        
-        <script type="module" src="src/main.js" ></script>
+        <script type="module" src="src/main.js"></script>
     </body>
 </html>
