@@ -22,6 +22,7 @@
 ![filter by type](https://github.com/user-attachments/assets/326ad236-8186-4bd2-964e-0bf9c9b92025)
 
 * Pokemon theme by main type
+
 ![grass](https://github.com/user-attachments/assets/fe518e0e-ffa3-4384-9ad7-f95646de0be2)
 ![psychic](https://github.com/user-attachments/assets/05ce4ae6-057f-419e-8632-869378e18590)
 
