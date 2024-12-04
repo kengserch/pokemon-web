@@ -1,113 +1,112 @@
-let currentPage = 1
-let allPokemonData = []
-let filteredPokemonData = []
+let currentPage = 1;
+let allPokemonData = [];
+let filteredPokemonData = [];
 
-document.getElementById('prev-btn').addEventListener('click', () => changePage(-1))
-document.getElementById('next-btn').addEventListener('click', () => changePage(1))
+document.getElementById('prev-btn').addEventListener('click', () => changePage(-1));
+document.getElementById('next-btn').addEventListener('click', () => changePage(1));
 
 async function initializePage() {
-    await fetchPokemon()
-    renderPokemonPage()
+    await fetchPokemon();
+    renderPokemonPage();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializePage()
-})
+    initializePage();
+});
 
 async function fetchPokemon() {
-    const loader = document.querySelector('.js-loader')
-    loader.classList.remove('hidden')
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.classList.add('hidden')
+    const loader = document.querySelector('.js-loader');
+    loader.classList.remove('hidden');
+    const grid = document.querySelector('.js-pokemon-grid');
+    grid.classList.add('hidden');
 
     try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=200`)
-        if (!response.ok) throw new Error('Failed to fetch Pokémon list')
-        const data = await response.json()
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=200`);
+        if (!response.ok) throw new Error('Failed to fetch Pokémon list');
+        const data = await response.json();
 
         // ดึงข้อมูลเพิ่มเติมในเบื้องหลัง (background)
         const promises = data.results.map(async (pokemon) => {
-            const res = await fetch(pokemon.url)
-            return res.json()
-        })
+            const res = await fetch(pokemon.url);
+            return res.json();
+        });
 
-        const pokemonData = await Promise.all(promises)
-        allPokemonData = pokemonData
-        filteredPokemonData = allPokemonData
+        const pokemonData = await Promise.all(promises);
+        allPokemonData = pokemonData;
+        filteredPokemonData = allPokemonData;
 
         //console.log(filteredPokemonData)
     } catch (error) {
-        console.log(error)
+        console.log(error);
     } finally {
-        loader.classList.add('hidden')
-        grid.classList.remove('hidden')
-        renderPokemonPage()
+        loader.classList.add('hidden');
+        grid.classList.remove('hidden');
+        renderPokemonPage();
     }
 }
 
 async function changePage(direction) {
-    const loader = document.querySelector('.js-loader')
-    loader.classList.remove('hidden') // แสดง loader ก่อน
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.classList.add('hidden') // ซ่อน grid ขณะที่กำลังโหลด
+    const loader = document.querySelector('.js-loader');
+    loader.classList.remove('hidden'); // แสดง loader ก่อน
+    const grid = document.querySelector('.js-pokemon-grid');
+    grid.classList.add('hidden'); // ซ่อน grid ขณะที่กำลังโหลด
 
-    currentPage += direction
-    renderPokemonPage()
+    currentPage += direction;
+    renderPokemonPage();
 
-    await new Promise((resolve) => setTimeout(resolve, 200))
-    loader.classList.add('hidden')
-    grid.classList.remove('hidden')
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    loader.classList.add('hidden');
+    grid.classList.remove('hidden');
 }
 
 //render
 function renderPokemonPage() {
-    const limit = 12
-    const startIndex = (currentPage - 1) * limit
-    const endIndex = startIndex + limit
-
-    const pokemonToDisplay = filteredPokemonData.slice(startIndex, endIndex)
+    const limit = 12;
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    const pokemonToDisplay = filteredPokemonData.slice(startIndex, endIndex);
 
     if (pokemonToDisplay.length === 0) {
         document.querySelector('.js-pokemon-notfound').innerHTML = `
             <div class="text-center text-gray-500">
                 <h1 class="text-5xl">No Pokémon found. Try searching again.</h1>
-            </div>`
-        document.querySelector('.js-pokemon-grid').classList.add('hidden')
-        document.querySelector('.js-pokemon-notfound').classList.remove('hidden')
+            </div>`;
+        document.querySelector('.js-pokemon-grid').classList.add('hidden');
+        document.querySelector('.js-pokemon-notfound').classList.remove('hidden');
 
         // ปิดปุ่ม Next/Previous ถ้าไม่มีผลลัพธ์
-        document.getElementById('prev-btn').disabled = true
-        document.getElementById('next-btn').disabled = true
-        return // จบการทำงานของฟังก์ชันนี้
+        document.getElementById('prev-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
+        return; // จบการทำงานของฟังก์ชันนี้
     }
 
-    document.querySelector('.js-pokemon-notfound').classList.add('hidden')
+    document.querySelector('.js-pokemon-notfound').classList.add('hidden');
 
-    renderPokemon(pokemonToDisplay)
+    renderPokemon(pokemonToDisplay);
 
     // อัปเดตปุ่ม Next/Previous
-    document.getElementById('prev-btn').disabled = currentPage === 1
-    document.getElementById('next-btn').disabled = endIndex >= filteredPokemonData.length
+    document.getElementById('prev-btn').disabled = currentPage === 1;
+    document.getElementById('next-btn').disabled = endIndex >= filteredPokemonData.length;
 }
 
 function renderPokemon(pokemonData) {
-    let pokemonDisplay = ''
-    document.querySelector('.js-pokemon-grid').classList.remove('hidden')
+    let pokemonDisplay = '';
+    document.querySelector('.js-pokemon-grid').classList.remove('hidden');
     if (!Array.isArray(pokemonData)) {
-        pokemonData = [pokemonData] // แปลง object เดี่ยวให้เป็นอาร์เรย์
+        pokemonData = [pokemonData]; // แปลง object เดี่ยวให้เป็นอาร์เรย์
         //console.log(typeof pokemonData)
-        document.getElementById('prev-btn').disabled = true
-        document.getElementById('next-btn').disabled = true
+        document.getElementById('prev-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
     }
 
     //console.log(pokemonData)
 
     pokemonData.forEach((pokemon, index) => {
         //console.log(pokemon)
-        const firstType = pokemon.types[0]?.type.name || '-'
-        const secondType = pokemon.types[1]?.type.name || null
-        const firstBadgeClass = getTypeBadgeClass(firstType)
-        const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : ''
+        const firstType = pokemon.types[0]?.type.name || '-';
+        const secondType = pokemon.types[1]?.type.name || null;
+        const firstBadgeClass = getTypeBadgeClass(firstType);
+        const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : '';
 
         pokemonDisplay += `<div class="card bg-slate-700 w-full drop-shadow-lg transition ease-in-out delay-75 hover:drop-shadow-xl hover:-translate-y-6 cursor-pointer duration-300 js-card" data-pokemon-id="${index}"> 
                         <div class="flex items-center justify-center w-full h-[10rem]">
@@ -122,169 +121,173 @@ function renderPokemon(pokemonData) {
                                 ${secondType ? `<div class="badge h-auto text-white font-semibold text-lg bg-transparent border-2  ${secondBadgeClass}">${secondType}</div>` : ''}
                             </div>
                         </div>
-            </div>`
-    })
+            </div>`;
+    });
 
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.innerHTML = pokemonDisplay
+    const grid = document.querySelector('.js-pokemon-grid');
+    grid.innerHTML = pokemonDisplay;
 
     grid.addEventListener('click', (event) => {
-        const card = event.target.closest('.js-card')
+        const card = event.target.closest('.js-card');
         //console.log(card.dataset.pokemonId)
         if (card) {
-            const index = card.dataset.pokemonId
-            openModal(index)
+            const index = card.dataset.pokemonId;
+            openModal(index);
         }
-    })
+    });
 }
 //end render
 
 //search function
-const searchInput = document.querySelector('.js-search-input')
-const searchBtn = document.querySelector('.js-search-btn')
+const searchInput = document.querySelector('.js-search-input');
+const searchBtn = document.querySelector('.js-search-btn');
 
 async function handleSearch() {
-    const pokemon = searchInput.value.trim()
+    const pokemon = searchInput.value.trim();
     if (pokemon) {
-        await searchPokemon(pokemon)
+        await searchPokemon(pokemon);
     } else {
-        filteredPokemonData = allPokemonData
-        renderPokemonPage()
+        filteredPokemonData = allPokemonData;
+        renderPokemonPage();
     }
 }
 
 searchBtn.addEventListener('click', (event) => {
-    event.preventDefault()
-    handleSearch()
-})
+    event.preventDefault();
+    handleSearch();
+});
 
 searchInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
-        event.preventDefault()
-        handleSearch()
+        event.preventDefault();
+        handleSearch();
     }
-})
+});
 
 searchInput.addEventListener('input', async () => {
     if (searchInput.value.trim() === '') {
-        filteredPokemonData = allPokemonData
-        renderPokemonPage()
+        filteredPokemonData = allPokemonData;
+        renderPokemonPage();
     }
-})
+});
 
 async function searchPokemon(query) {
-    const loader = document.querySelector('.js-loader')
-    loader.classList.remove('hidden')
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.classList.add('hidden')
+    const loader = document.querySelector('.js-loader');
+    loader.classList.remove('hidden');
+    const grid = document.querySelector('.js-pokemon-grid');
+    grid.classList.add('hidden');
 
     try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`)
-        if (!response.ok) throw new Error('Failed to fetch Pokémon list')
-        const pokemon = await response.json()
-        filteredPokemonData = [pokemon]
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`);
+        if (!response.ok) throw new Error('Failed to fetch Pokémon list');
+        const pokemon = await response.json();
+        console.log(pokemon);
+        console.log(typeof pokemon);
+        filteredPokemonData = [pokemon];
+        console.log(filteredPokemonData);
+        console.log(typeof pokemon);
     } catch (error) {
-        filteredPokemonData = []
+        filteredPokemonData = [];
     } finally {
-        loader.classList.add('hidden')
-        grid.classList.remove('hidden')
-        renderPokemonPage()
+        loader.classList.add('hidden');
+        grid.classList.remove('hidden');
+        renderPokemonPage();
     }
 }
 //end search function
 
 //filter by type
 function filterByType(type) {
-    const loader = document.querySelector('.js-loader')
-    loader.classList.remove('hidden')
-    const grid = document.querySelector('.js-pokemon-grid')
-    grid.classList.add('hidden')
+    const loader = document.querySelector('.js-loader');
+    loader.classList.remove('hidden');
+    const grid = document.querySelector('.js-pokemon-grid');
+    grid.classList.add('hidden');
 
-    filteredPokemonData = allPokemonData.filter((pokemon) => pokemon.types.some((t) => t.type.name === type))
+    filteredPokemonData = allPokemonData.filter((pokemon) => pokemon.types.some((t) => t.type.name === type));
 
     if (filteredPokemonData.length === 0) {
         document.querySelector('.js-pokemon-notfound').innerHTML = `
             <div class="text-center text-gray-500">
                 <h1 class="text-5xl">No Pokémon found. Try searching again.</h1>
-            </div>`
-        document.querySelector('.js-pokemon-grid').classList.add('hidden')
-        document.querySelector('.js-pokemon-notfound').classList.remove('hidden')
+            </div>`;
+        document.querySelector('.js-pokemon-grid').classList.add('hidden');
+        document.querySelector('.js-pokemon-notfound').classList.remove('hidden');
 
-        document.getElementById('prev-btn').disabled = true
-        document.getElementById('next-btn').disabled = true
+        document.getElementById('prev-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
         setTimeout(() => {
-            loader.classList.add('hidden')
-            grid.classList.add('hidden')
-        }, 200)
-        return
+            loader.classList.add('hidden');
+            grid.classList.add('hidden');
+        }, 200);
+        return;
     }
 
-    currentPage = 1
-    renderPokemonPage()
+    currentPage = 1;
+    renderPokemonPage();
 
     setTimeout(() => {
-        loader.classList.add('hidden')
-        grid.classList.remove('hidden')
-    }, 200)
+        loader.classList.add('hidden');
+        grid.classList.remove('hidden');
+    }, 200);
 }
-const types = ['normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy']
-const container = document.querySelector('.types-container')
+const types = ['normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+const container = document.querySelector('.types-container');
 
 types.forEach((type) => {
-    const button = document.createElement('button')
-    button.classList.add('btn', 'btn-outline', 'btn-xs')
-    button.style.color = 'white'
-    button.style.borderColor = getProgressColor(type)
+    const button = document.createElement('button');
+    button.classList.add('btn', 'btn-outline', 'btn-xs');
+    button.style.color = 'white';
+    button.style.borderColor = getProgressColor(type);
     //button.classList.add(`${getTypeBadgeClass(type)}`)
-    button.textContent = type.charAt(0).toUpperCase() + type.slice(1)
-    container.appendChild(button)
+    button.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    container.appendChild(button);
 
     button.addEventListener('mouseover', () => {
         if (!button.classList.contains('btn-active')) {
-            button.style.color = '#ffffff'
-            button.style.backgroundColor = getProgressColor(type)
+            button.style.color = '#ffffff';
+            button.style.backgroundColor = getProgressColor(type);
         }
-    })
+    });
     button.addEventListener('mouseout', () => {
         if (!button.classList.contains('btn-active')) {
-            button.style.backgroundColor = 'transparent'
+            button.style.backgroundColor = 'transparent';
         }
-    })
+    });
 
     button.addEventListener('click', () => {
-        const isActive = button.classList.contains('btn-active')
+        const isActive = button.classList.contains('btn-active');
 
         //console.log('First State Click:', button.classList.contains('btn-active'))
 
         document.querySelectorAll('.btn-outline').forEach((btn) => {
-            btn.classList.remove('btn-active')
-            btn.style.backgroundColor = 'transparent'
-        })
+            btn.classList.remove('btn-active');
+            btn.style.backgroundColor = 'transparent';
+        });
 
         if (isActive) {
-            filteredPokemonData = allPokemonData
-            renderPokemonPage()
+            filteredPokemonData = allPokemonData;
+            renderPokemonPage();
             //console.log('Un select type click:', button.classList.contains('btn-active'))
         } else {
-            button.style.backgroundColor = getProgressColor(type)
-            button.style.color = 'white'
+            button.style.backgroundColor = getProgressColor(type);
+            button.style.color = 'white';
             //console.log('Select type click:', button.classList.contains('btn-active'))
-            button.classList.add('btn-active')
+            button.classList.add('btn-active');
             //console.log('After Select type click:', button.classList.contains('btn-active'))
-            filterByType(type)
+            filterByType(type);
         }
-    })
-})
+    });
+});
 //end filter by type
 
 //open detail pokemon with modal
 function openModal(index) {
-    const pokemon = filteredPokemonData[index]
+    const pokemon = filteredPokemonData[index];
     //console.log(pokemon)
-    const firstType = pokemon.types[0]?.type.name || '-'
-    const secondType = pokemon.types[1]?.type.name || null
-    const firstBadgeClass = getTypeBadgeClass(firstType)
-    const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : ''
+    const firstType = pokemon.types[0]?.type.name || '-';
+    const secondType = pokemon.types[1]?.type.name || null;
+    const firstBadgeClass = getTypeBadgeClass(firstType);
+    const secondBadgeClass = secondType ? getTypeBadgeClass(secondType) : '';
 
     document.getElementById('pokemon-modal').innerHTML = `<div class="modal-content bg-slate-700 rounded-lg mx-5 p-6 max-w-md lg:max-w-lg w-full h-auto relative">
                         <button id="modal-close" class=" text-red-600 top-4 right-4 absolute text-xl font-bold">❌</button>
@@ -298,7 +301,7 @@ function openModal(index) {
                             </div>
                         <div id="modal-body">
                         </div>
-                    </div>`
+                    </div>`;
 
     const statsHtml = pokemon.stats
         .map(
@@ -310,25 +313,29 @@ function openModal(index) {
         </div>
     `
         )
-        .join('')
+        .join('');
 
-    document.getElementById('modal-body').innerHTML = statsHtml
+    document.getElementById('modal-body').innerHTML = statsHtml;
 
-    document.getElementById('pokemon-modal').classList.remove('hidden')
+    const modal = document.getElementById('pokemon-modal');
+    modal.classList.remove('hidden');
 
-    document.getElementById('modal-close').addEventListener('click', closeModal)
-    document.getElementById('pokemon-modal').addEventListener('click', closeModal)
+    const modalContent = document.querySelector('.modal-content');
+    modalContent.addEventListener('click', (event) => event.stopPropagation());
+
+    modal.addEventListener('click', closeModal);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
 }
 //close modal
 function closeModal() {
-    const modal = document.getElementById('pokemon-modal')
-    const modalContent = document.querySelector('.modal-content')
-    modalContent.classList.add('fadeOut')
+    const modal = document.getElementById('pokemon-modal');
+    const modalContent = document.querySelector('.modal-content');
+    modalContent.classList.add('fadeOut');
 
     setTimeout(() => {
-        modal.classList.add('hidden')
-        modalContent.classList.remove('fadeOut')
-    }, 200)
+        modal.classList.add('hidden');
+        modalContent.classList.remove('fadeOut');
+    }, 200);
 }
 
 function getTypeBadgeClass(type) {
@@ -351,8 +358,8 @@ function getTypeBadgeClass(type) {
         dark: 'border-gray-800',
         steel: 'border-gray-300',
         fairy: 'border-pink-300',
-    }
-    return typeColors[type] || 'bg-gray-200' // สีเริ่มต้นหากไม่เจอ type
+    };
+    return typeColors[type] || 'bg-gray-200'; // สีเริ่มต้นหากไม่เจอ type
 }
 
 function getProgressColor(type) {
@@ -375,6 +382,6 @@ function getProgressColor(type) {
         dark: '#1f2937',
         steel: '#d1d5db',
         fairy: '#f9a8d4',
-    }
-    return typeColors[type] || '#d3d3d3'
+    };
+    return typeColors[type] || '#d3d3d3';
 }
