@@ -37,3 +37,7 @@
 #myProgress::-webkit-progress-value {
     background-color: var(--progress-value-color);
 }
+
+.custom-text-color {
+    color: var(--dynamic-color) !important;
+}
